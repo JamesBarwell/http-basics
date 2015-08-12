@@ -1,4 +1,4 @@
-<doctype html>
+<!doctype html>
 <html>
 <head>
 <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
@@ -15,11 +15,12 @@
   <a href="/basic">Basic</a>
   <a href="/prg">Post/redirect/get</a>
   <a href="/csrf">CSRF token</a>
+  <a href="/combined">Combined</a>
 </nav>
 
-<form action="/{{ path }}/post" method="post">
+<form action="/{{ path }}/post" method="post" autocomplete="off">
   <input type="text" name="name" autofocus placeholder="Enter your name...">
-  <input type="hidden" value="{{ csrf }}">
+  <input name="csrf" type="hidden" value="{{ csrf }}">
   <input type="submit" value="Send"</input>
 </form>
 

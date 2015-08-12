@@ -22,8 +22,11 @@ function onRequest(req, res) {
         return
     }
 
-    respond(res, 404, 'not found')
+    res.setHeader('Location', '/basic')
+    respond(res, 302, null)
 }
+
+var lastCsrf = null
 
 var handlers = {
     'favicon.ico': function(req, res) {
@@ -40,6 +43,34 @@ var handlers = {
         // post
         getReqData(req, function(data) {
             debug.data(data)
+            var html = template.formThanks
+            respond(res, 200, html)
+        })
+    },
+    csrf: function(req, res, urlParts) {
+        if (req.method == 'GET') {
+            // main page
+            var csrf = getCsrf()
+            lastCsrf = csrf
+
+            var html = replaceTokens(template.form, { path: 'csrf', csrf: csrf })
+            respond(res, 200, html)
+            return
+        }
+
+        // post
+        getReqData(req, function(data) {
+            debug.data(data)
+
+            var parsedData = decodeUrlData(data)
+            if (parsedData.csrf != lastCsrf) {
+                res.setHeader('Location', '/csrf')
+                respond(res, 302, null)
+                return
+            }
+
+            lastCsrf = null
+
             var html = template.formThanks
             respond(res, 200, html)
         })
@@ -66,8 +97,40 @@ var handlers = {
             respond(res, 302, null)
         })
     },
-    csrf: function(req, res) {
-        respond(res, 404, null)
+    combined: function(req, res, urlParts) {
+        if (req.method == 'GET') {
+            if (!urlParts[2]) {
+                // main page
+                var csrf = getCsrf()
+                lastCsrf = csrf
+
+                var html = replaceTokens(template.form, { path: 'combined', csrf: csrf })
+                respond(res, 200, html)
+                return
+            } else if (urlParts[2] == 'thanks') {
+                // thanks page
+                var html = template.formThanks
+                respond(res, 200, html)
+                return
+            }
+        }
+
+        // post
+        getReqData(req, function(data) {
+            debug.data(data)
+
+            var parsedData = decodeUrlData(data)
+            if (parsedData.csrf != lastCsrf) {
+                res.setHeader('Location', '/csrf')
+                respond(res, 302, null)
+                return
+            }
+
+            lastCsrf = null
+
+            res.setHeader('Location', '/combined/thanks')
+            respond(res, 302, null)
+        })
     }
 }
 
@@ -86,6 +149,16 @@ function getReqData(req, callback) {
     req.on('end', function() {
         callback(buffer)
     });
+}
+
+function decodeUrlData(string) {
+    var data = {}
+    var pairs = string.split('&')
+    pairs.forEach(function(pair) {
+        var parts = pair.split('=')
+        data[parts[0]] = parts[1]
+    });
+    return data
 }
 
 function logRequest(req) {
