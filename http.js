@@ -6,54 +6,57 @@ var debug = {
 }
 var crypto = require('crypto')
 
-var htmlTemplate = fs.readFileSync('./html/index.html', 'utf8')
+var template = {
+    index: fs.readFileSync('./html/index.html', 'utf8')
+}
 
-var server = http.createServer(function(req, res) {
-
+var server = http.createServer(onRequest).listen(80)
+function onRequest(req, res) {
     logRequest(req)
-
     var urlParts = req.url.split('/')
 
-    if (urlParts[1] == 'favicon.ico') {
-        res.writeHead(404, {'Content-Type': 'text/html'});
-        res.end()
+    if (handlers[urlParts[1]]) {
+        handlers[urlParts[1]](req, res, urlParts)
+        return
     }
 
-    var reponseCode = 404
-    var responseHtml = 'not found'
+    res.setHeader('Location', '/nocache')
+    respond(res, 302, null)
+}
 
-    if (urlParts[1] == 'nocache') {
-        responseCode = 200
-        responseHtml = getPageHtml('index', '/nocache')
+var handlers = {
+    'favicon.ico': function(req, res) {
+        respond(res, 404, null)
+    },
+    nocache: function(req, res) {
         res.setHeader('Cache-Control', 'no-cache, no-store, max-age=0');
-    }
-
-    if (urlParts[1] == 'cache') {
-        responseCode = 200
-        responseHtml = getPageHtml('index', '/cache')
+        var html = replaceTokens(template.index, { path: '/nocache' })
+        respond(res, 200, html)
+    },
+    cache: function(req, res) {
+        var html = replaceTokens(template.index, { path: '/cache' })
         res.setHeader('Cache-Control', 'max-age=30');
-    }
-
-    if (urlParts[1] == 'etag') {
-        responseHtml = getPageHtml('index', '/etag')
-        var contentMd5 = getHash(responseHtml)
+        respond(res, 200, html)
+    },
+    etag: function(req, res) {
+        var html = replaceTokens(template.index, { path: '/etag' })
+        var contentMd5 = getHash(html)
         var checkMd5 = req.headers['if-none-match']
 
         if (checkMd5 == contentMd5) {
-            responseCode = 304
-            responseHtml = null
+            respond(res, 304, null)
         } else {
-            responseCode = 200
+            res.setHeader('Etag', contentMd5);
+            respond(res, 200, html)
         }
-
-        res.setHeader('Etag', contentMd5);
     }
+}
 
-    debug.response(responseCode, res._headers)
-
-    res.writeHead(responseCode, {'Content-Type': 'text/html'});
-    res.end(responseHtml)
-}).listen(80)
+function respond(res, code, html) {
+    debug.response(code, res._headers)
+    res.writeHead(code, {'Content-Type': 'text/html'});
+    res.end(html)
+}
 
 function logRequest(req) {
     var logHeaders = {}
@@ -69,9 +72,12 @@ function logRequest(req) {
     debug.request(req.method, req.url, logHeaders)
 }
 
-function getPageHtml(name, path) {
-    var html = replaceAll('{{ path }}', path, htmlTemplate)
-    return html
+function replaceTokens(string, map) {
+    Object.keys(map).forEach(function(token) {
+        var value = map[token]
+        string = replaceAll('{{ ' + token + ' }}', value, string)
+    });
+    return string
 }
 
 function replaceAll(find, replace, str) {

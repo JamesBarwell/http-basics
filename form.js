@@ -7,7 +7,6 @@ var debug = {
 }
 
 var template = {
-    index: 'test',
     form: fs.readFileSync('./html/form.html', 'utf8'),
     formThanks: fs.readFileSync('./html/form-thanks.html', 'utf8')
 }
