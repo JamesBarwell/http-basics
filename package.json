@@ -1,13 +1,14 @@
 {
-  "name": "httpdemo",
+  "name": "http-basics",
   "version": "1.0.0",
-  "description": "",
-  "main": "app.js",
+  "description": "Simple demos to demonstrate HTTP",
+  "main": "http.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "James Barwell <jb@jamesbarwell.co.uk>",
+  "license": "MIT",
+  "private": true,
   "dependencies": {
     "debug": "^2.2.0"
   }
