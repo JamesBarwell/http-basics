@@ -3,6 +3,7 @@
 Simple demos to demonstrate:
 * HTTP caching
 * Form submission
+* XSS
 
 This is intended to accompany a talk on HTTP basics.
 

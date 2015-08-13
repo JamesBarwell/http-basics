@@ -1,0 +1,30 @@
+<doctype html>
+<html>
+<head>
+<link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo=">
+<style>
+  body {
+    font: 400 20px/1.5em Georgia, Cambria, "Times New Roman", Palatino, Times, "Palatino Linotype", serif;
+  }
+</style>
+</head>
+
+<body>
+<form>
+  <input type="text" name="name" id="name" placeholder="What is your name?">
+  <input type="submit" value="Send"</input>
+
+  <h1>{{ message }}</h1>
+</form>
+
+<script>
+  document.forms[0].onsubmit = function(event) {
+    var name = document.getElementById('name').value
+    window.location = '/xss/?name=' + name
+    return false
+  }
+</script>
+
+</body>
+</html>
